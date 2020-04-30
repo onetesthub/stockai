@@ -37,7 +37,7 @@ const scrape = async (req, res) => {
   const respoonse = await axios.get(baseUrl);
   const $ = cheerio.load(respoonse.data);
 
-  const currentValue = 9382; //todo -> get dynamic current value
+  const { currentValue } = await getCurrentValue(); //todo -> get dynamic current value
   const expiryDate = '14MAY2020'; //todo -> get expiry date from url || scrape from page
   const symbol = "NIFTY"; //todo -> get dynamic symbol
 
@@ -47,9 +47,12 @@ const scrape = async (req, res) => {
   const currStrikePriceIndex = await getCurrStrikePriceIndex(tableRows, currentValueRoundOff, $);
   if (tableRows.length > currStrikePriceIndex + 20)
     tableRows.splice(currStrikePriceIndex + 20, tableRows.length); // removing enteries from end
-  if (currStrikePriceIndex > 20 && tableRows.length > 20)
-    tableRows.splice(0, currStrikePriceIndex - 20); // removing enteries from strting
 
+  let temp = 20;
+  if (currStrikePriceIndex > 20 && tableRows.length > 20)
+    tableRows.splice(0, currStrikePriceIndex - 20); // removing enteries from starting
+  else temp = currStrikePriceIndex;
+  
   const tableData = [];
   tableRows.each((index, element) => {
 
@@ -61,8 +64,8 @@ const scrape = async (req, res) => {
       else if($(elem).hasClass('ylwbg')) set2.push($(elem).text().trim());
     });
 
-    let callObj = { type: "call", symbol, expiryDate, currentValue, strikePrice },
-      putObj = { type: "put", symbol, expiryDate, currentValue, strikePrice };
+    let callObj = { type: "call", symbol, expiryDate, currentValue, strikePrice, index },
+      putObj = { type: "put", symbol, expiryDate, currentValue, strikePrice, index };
 
     if(strikePrice < currentValueRoundOff){
       callObj.values = set2;
@@ -71,11 +74,12 @@ const scrape = async (req, res) => {
      callObj.values = set1;
      putObj.values = set2;
     }
-
-    tableData.push(callObj, putObj);
+    if(index < temp - 5) tableData.push(putObj);
+    else if(index > temp + 4) tableData.push(callObj);
+    else tableData.push(callObj, putObj);
 
   });
-
+  console.log(currentValueRoundOff);
   return res.status(200).json({ data: tableData });
 }
 
