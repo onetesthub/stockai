@@ -57,8 +57,8 @@ const scrape = async (req, res) => {
       else if($(elem).hasClass('ylwbg')) set2.push($(elem).text().trim());
     });
 
-    let callObj = { type: "call", symbol, expiryDate, currentValue, strikePrice, index },
-      putObj = { type: "put", symbol, expiryDate, currentValue, strikePrice, index };
+    let callObj = { type: "call", symbol, expiryDate, currentValue, strikePrice },
+      putObj = { type: "put", symbol, expiryDate, currentValue, strikePrice };
 
     if(strikePrice < currentValueRoundOff){
       callObj.values = set2;
