@@ -3,10 +3,7 @@ const cheerio = require("cheerio");
 const baseUrl = "https://www1.nseindia.com/live_market/dynaContent/live_watch/option_chain/optionKeys.jsp";
 // const scrapeUrl = "https://www1.nseindia.com/live_market/dynaContent/live_watch/option_chain/optionKeys.jsp?segmentLink=17&instrument=OPTIDX&symbol=NIFTY&date=14MAY2020";
 
-const getWeeks = async (noOfWeeks = 3) => {
-  const response = await axios.get(baseUrl);
-  const $ = cheerio.load(response.data);
-
+const getWeeks = async ($, noOfWeeks = 3) => {
   let dateDropDown = $("#date option");
   let dateArray = [];
   dateDropDown.each((index, element) => {
@@ -21,10 +18,7 @@ const getSymbols = async () => {
   return ['NIFTY'];
 };
 
-const getCurrentValue = async () => {
-  //? wrapper_btm > table(first)
-  const response = await axios.get(baseUrl);
-  const $ = cheerio.load(response.data);
+const getCurrentValue = async ($) => {
   let currentValuelabel = $("#wrapper_btm table tbody tr div").last().children('span').first().children('b').first().html().trim();
   return {
     currentIndex: currentValuelabel.split(' ')[0],
@@ -37,9 +31,8 @@ const scrape = async (req, res) => {
   const respoonse = await axios.get(baseUrl);
   const $ = cheerio.load(respoonse.data);
 
-  const { currentValue } = await getCurrentValue(); //todo -> get dynamic current value
-  const expiryDate = '14MAY2020'; //todo -> get expiry date from url || scrape from page
-  const symbol = "NIFTY"; //todo -> get dynamic symbol
+  const { currentValue, currentIndex: symbol } = await getCurrentValue($);
+  const expiryDate = (await getWeeks($))[0];
 
   const currentValueRoundOff = currentValue + (50 - (currentValue % 50));
 
