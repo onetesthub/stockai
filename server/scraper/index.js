@@ -1,7 +1,7 @@
 const axios = require("axios");
 const cheerio = require("cheerio");
 const baseUrl = "https://www1.nseindia.com/live_market/dynaContent/live_watch/option_chain/optionKeys.jsp";
-const scrapeUrl = "https://www1.nseindia.com/live_market/dynaContent/live_watch/option_chain/optionKeys.jsp?segmentLink=17&instrument=OPTIDX&symbol=NIFTY&date=14MAY2020";
+// const scrapeUrl = "https://www1.nseindia.com/live_market/dynaContent/live_watch/option_chain/optionKeys.jsp?segmentLink=17&instrument=OPTIDX&symbol=NIFTY&date=14MAY2020";
 
 const getWeeks = async (noOfWeeks = 3) => {
   const response = await axios.get(baseUrl);
@@ -18,10 +18,10 @@ const getWeeks = async (noOfWeeks = 3) => {
 };
 
 const getSymbols = async () => {
-  return [ 'NIFTY' ];
+  return ['NIFTY'];
 };
 
-const getCurrentValue = async () =>{
+const getCurrentValue = async () => {
   //? wrapper_btm > table(first)
   const response = await axios.get(baseUrl);
   const $ = cheerio.load(response.data);
@@ -34,55 +34,49 @@ const getCurrentValue = async () =>{
 
 //  ! new code for full page extraction
 const scrape = async (req, res) => {
-  const respoonse = await axios.get(scrapeUrl);
+  const respoonse = await axios.get(baseUrl);
   const $ = cheerio.load(respoonse.data);
-  //todo get dynamic current value 
-  let currIndexValue = 9382;
-  const currIndexValueRoundOff =  currIndexValue + ( 50 - ( currIndexValue % 50));
+
+  const currentValue = 9382; //todo -> get dynamic current value
+  const expiryDate = '14MAY2020'; //todo -> get expiry date from url || scrape from page
+  const symbol = "NIFTY"; //todo -> get dynamic symbol
+
+  const currentValueRoundOff = currentValue + (50 - (currentValue % 50));
+
   let tableRows = $("#octable tbody tr");
-  let rowsArray = [], strikePriceArray = [];
+  const currStrikePriceIndex = await getCurrStrikePriceIndex(tableRows, currentValueRoundOff, $);
+  if (tableRows.length > currStrikePriceIndex + 20)
+    tableRows.splice(currStrikePriceIndex + 20, tableRows.length); // removing enteries from end
+  if (currStrikePriceIndex > 20 && tableRows.length > 20)
+    tableRows.splice(0, currStrikePriceIndex - 20); // removing enteries from strting
 
-  const currStrikePriceIndex = await getCurrStrikePriceIndex(tableRows,currIndexValueRoundOff, $);
-
+  const tableData = [];
   tableRows.each((index, element) => {
-    if(index == tableRows.length - 1)  return true // for skipping last iteration
-    if(index < currStrikePriceIndex - 20) return true
-    if(index > currStrikePriceIndex + 20) return false
 
     const strikePrice = Number( $(element).children(".grybg").children("a").last().children("b").last().html().trim() );
-    strikePriceArray.push(strikePrice);
+    
+    let set1 = [], set2 = [];
+    $(element).children('td').each((index, elem)=>{
+      if($(elem).hasClass('nobg')) set1.push($(elem).text().trim());
+      else if($(elem).hasClass('ylwbg')) set2.push($(elem).text().trim());
+    });
 
-  //   rowsArray.push(element);
-  //   // $(element).children('td').each((index, elem)=>{
-  //   //   if($(elem).hasClass('nobg')) set1.push($(elem).text().trim());
-  //   //   else if($(elem).hasClass('grybg')) strikePrice = $(elem).children('a').last().children('b').last().html().trim();
-  //   //   else if($(elem).hasClass('ylwbg')) set2.push($(elem).text().trim());
-  //   // });
-  //   // * get current stock value
-    // let callObj = {
-    //     type: "call",
-    //     symbol: "NIFTY",
-    //     expiryDate: "14MAY2020",
-    //     currentValue: "9,364.40",
-    //   },
-    //   putObj = {
-    //     type: "put",
-    //     symbol: "NIFTY",
-    //     expiryDate: "14MAY2020",
-    //     currentValue: "9,364.40",
-    //   };
-  //   // $(element).children('td').each((index, elem)=>{
-  //   //   if($(elem).hasClass('nobg')){
-  //   //     callObj.push($(elem).text().trim());
-  //   //   }
-  //   //   else if($(elem).hasClass('grybg')) strikePrice = $(elem).children('a').last().children('b').last().html().trim();
-  //   //   else if($(elem).hasClass('ylwbg')) putObj.push($(elem).text().trim());
-  //   // });
+    let callObj = { type: "call", symbol, expiryDate, currentValue, strikePrice },
+      putObj = { type: "put", symbol, expiryDate, currentValue, strikePrice };
 
-  //   // temp.push({set1, set2,strikePrice});
+    if(strikePrice < currentValueRoundOff){
+      callObj.values = set2;
+      putObj.values = set1;
+    }else{
+     callObj.values = set1;
+     putObj.values = set2;
+    }
+
+    tableData.push(callObj, putObj);
+
   });
-  // console.log(strikePriceArray);
-  return res.status(200).json({ data: strikePriceArray });
+
+  return res.status(200).json({ data: tableData });
 }
 
 // 
@@ -98,12 +92,11 @@ module.exports = {
  ? ==== helper functions ====
  ? ==========================
 */
-function getCurrStrikePriceIndex(tableRows, currIndexValueRoundOff, $){
+function getCurrStrikePriceIndex(tableRows, currentValueRoundOff, $) {
   let currIndex;
-  console.log(currIndexValueRoundOff);
   tableRows.each((index, element) => {
-    if(index == tableRows.length - 1)  return true // same as continue for loops
-    if(currIndexValueRoundOff == Number( $(element).children(".grybg").children("a").last().children("b").last().html().trim() )){
+    if (index == tableRows.length - 1) return true // same as continue for loops
+    if (currentValueRoundOff == Number($(element).children(".grybg").children("a").last().children("b").last().html().trim())) {
       currIndex = index;
       return false; //same as break for loops
     }
