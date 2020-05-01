@@ -8,6 +8,7 @@ module.exports = class Queue {
 
   push(data) {
     console.log('event added to queue.......\n', data);
+    // console.log(data);
     this.elements.push(data);
     // this.dequeue();
   }
