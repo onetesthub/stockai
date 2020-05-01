@@ -1,4 +1,4 @@
-const { getSymbolData, getWeeks } = require('./crawler.js');
+const { getSymbolData, getWeeks } = require('../crawlers/nifty.js');
 
 const symbols = ["NIFTY", "BANKNIFTY", "HDFC"];
 // const symbols = ["NIFTY"]; //* for testing
