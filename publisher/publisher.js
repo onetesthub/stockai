@@ -8,13 +8,15 @@ module.exports = class Queue {
   }
 
   push(data) {
-    console.log('event added to queue.......\n', data);
+    // console.log('event added to queue.......\n', data);
     this.elements.push(data);
-    // this.dequeue();
+    if(this.elements.length >= 10) this.dequeue();
   }
 
   dequeue() {
-    let data = this.elements.shift();
+
+    let data = this.elements.splice(0, 10);
+    // console.log('data :>> ', data);
     let symbolCategory = this.symbolCategory;
     let url = `http://localhost:4030/api/publish/${symbolCategory}`
     request({
@@ -27,7 +29,7 @@ module.exports = class Queue {
       json: true
     },(error, res, body) => {
       if (error) {
-        console.error(error)
+        console.error('error in publishing')
         return
       }
       console.log(`statusCode: ${res.statusCode}`)

@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-const { getSymbolData, getWeeks } = require('../crawlers/nifty.js');
-=======
 const { getSymbolData, getWeeks } = require('./../crawlers/nifty');
->>>>>>> 6edf134a4674414010efc16d97873015e68554f7
 
 const symbols = ["NIFTY", "BANKNIFTY", "HDFC"];
 // const symbols = ["NIFTY"]; //* for testing
