@@ -1,6 +1,6 @@
 const { getSymbolData, getWeeks } = require('./../crawlers/nifty');
 
-const symbols = ["NIFTY", "BANKNIFTY", "HDFC"];
+const symbols = ["NIFTY", "BANKNIFTY"];
 // const symbols = ["NIFTY"]; //* for testing
 
 const crawler = async (symbol, week) => {
@@ -9,13 +9,14 @@ const crawler = async (symbol, week) => {
 
 async function runBot(symbols) {
   const weeks = await getWeeks();
-  
-  // setInterval(() => {
+  // const weeks = ['30APR2020']; //* for testing
+
+  setInterval(() => {
     for (const symbol of symbols) {
       for (const week of weeks) {
         crawler(symbol, week);
       }
     }
-  // }, 10000 || 300000);
+  }, 10000 || 300000);
 } 
 runBot(symbols);
