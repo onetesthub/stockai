@@ -7,7 +7,7 @@ module.exports = class Queue {
   }
 
   push(data) {
-    console.log(data);
+    // console.log(data);
     this.elements.push(data);
     // this.dequeue();
   }

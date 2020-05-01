@@ -11,4 +11,4 @@
 // app.listen(PORT, () => {
 //   console.log(`server started at ${PORT}`);
 // });
-require('./bot.js');
+require('./scheduler/nifty');

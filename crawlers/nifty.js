@@ -1,20 +1,21 @@
 const axios = require("axios");
 const cheerio = require("cheerio");
-const publiser = require('../publisher.js');
+const publiser = require('../publisher/publisher');
 const queue = new publiser();
 const niftyBaseUrl = "https://www1.nseindia.com/live_market/dynaContent/live_watch/option_chain/optionKeys.jsp";
 const stockBaseUrl = null;
 
-const getCurrStrikePriceIndex = (tableRows, currentValueRoundOff, $) => {
-  let currIndex;
+const getCurrStrikeData = (tableRows, currentIndex, $) => {
+  let currIndex, currValue;
   tableRows.each((index, element) => {
     if (index == tableRows.length - 1) return true // same as continue for loops
-    if (currentValueRoundOff == Number($(element).children(".grybg").children("a").last().children("b").last().html().trim())) {
+    if (Number($(element).children(".grybg").children("a").last().children("b").last().html().trim()) > currentIndex) {
       currIndex = index;
+      currValue = Number($(element).children(".grybg").children("a").last().children("b").last().html().trim())
       return false; //same as break for loops
     }
   });
-  return currIndex;
+  return { currStrikePriceIndex: currIndex, currentValueRoundOff: currValue } ;
 }
 
 const getWeeks = async (weekCount = 3) => {
@@ -46,16 +47,14 @@ const getCrawlUrl = (symbol, week) =>{
 };
 
 const getNiftyData = async (crawlUrl, symbol, week) => {
-
   const respoonse = await axios.get(crawlUrl);
 
   const $ = cheerio.load(respoonse.data);
+  let tableRows = $("#octable tbody tr");
 
   const { currentValue } = await getCurrentNiftyValue($);
-  const currentValueRoundOff = currentValue + (50 - (currentValue % 50));
 
-  let tableRows = $("#octable tbody tr");
-  const currStrikePriceIndex = await getCurrStrikePriceIndex(tableRows, currentValueRoundOff, $);
+  const { currStrikePriceIndex, currentValueRoundOff } = await getCurrStrikeData(tableRows, currentValue, $);
   
   if (tableRows.length > currStrikePriceIndex + 20)
     tableRows.splice(currStrikePriceIndex + 20, tableRows.length); // removing enteries from end
@@ -67,7 +66,6 @@ const getNiftyData = async (crawlUrl, symbol, week) => {
   
   const symbolData = [];
   tableRows.each((index, element) => {
-
     const strikePrice = Number( $(element).children(".grybg").children("a").last().children("b").last().html().trim() );
     
     let set1 = [], set2 = [];
