@@ -1,24 +1,42 @@
 const dowcrawler = require('../crawlers/dowcrawler.js');
 
-const symbols = ["WFC"];
+const defaultSymbols = ["WFC"];
 
 let expWeekCount = 4;
 
 
-async function runBot(symbols) {
+module.exports = class DowBot {
+    
+    constructor(symbols) {
+        this.symbols = symbols || defaultSymbols;
+    }
 
-    console.log('Staring US BOT.....');
+    async startBot() {
 
-    setInterval(async () => {
-        for (const symbol of symbols) {
+        console.log('Staring US BOT.....');
 
-            console.log('Fetching exp weeks for symbol ', symbol);
-            const expDates = await dowcrawler.getexpDates(symbol, expWeekCount);
+        setInterval(async () => {
+            for (const symbol of this.symbols) {
 
-            for (const week of expDates) {
-                dowcrawler.getOptionData(symbol, week);
+                console.log('Fetching exp weeks for symbol ', symbol);
+                const expDates = await dowcrawler.getexpDates(symbol, expWeekCount);
+
+                for (const week of expDates) {
+                    dowcrawler.getOptionData(symbol, week);
+                }
             }
-        }
-    }, 10000 || 300000);
+        }, 10000 || 300000);
+    }
+
+    stopBot(){
+
+        
+    }
 }
+
 runBot(symbols);
+
+module.exports = {
+
+
+}

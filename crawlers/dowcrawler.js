@@ -1,6 +1,6 @@
 var request = require('request-promise-native');
 const publiser = require('../publisher/publisher.js');
-const queue = new publiser();
+const queue = new publiser('ussymbol');
 
 let requestPayload = function (symbol, expDate) {
 

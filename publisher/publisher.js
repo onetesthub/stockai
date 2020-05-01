@@ -2,21 +2,23 @@
 const request = require("request");
 
 module.exports = class Queue {
-  constructor() {
+  constructor(symbolCategory) {
+    this.symbolCategory = symbolCategory,
     this.elements = [];
   }
 
   push(data) {
     console.log('event added to queue.......\n', data);
-    // console.log(data);
     this.elements.push(data);
     // this.dequeue();
   }
 
   dequeue() {
     let data = this.elements.shift();
+    let symbolCategory = this.symbolCategory;
+    let url = `http://localhost:4030/api/publish/${symbolCategory}`
     request({
-      url : 'https://api.jetmanlabs.com/api/public/es/publishstock',
+      url : url,
       method :"POST",
       headers : {
         "content-type": "application/json",
