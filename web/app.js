@@ -83,7 +83,7 @@ app.post('/api/publish/:symbolcategory/', async (req, res) => {
     let response = await esClient.bulk({
       body: esBody
     });
-    console.log('response from es index is ', response);
+    //console.log('response from es index is ', response);
     res
       .status(200)
       .json({

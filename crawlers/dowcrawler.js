@@ -12,25 +12,47 @@ let requestPayload = function (symbol, expDate) {
   return (requestDefault = {
     uri: url,
     transform: function (body) {
-      if (!undefined) return JSON.parse(body);
+      if (body) return JSON.parse(body);
       else return null;
     },
   });
 };
 
+let getsymbolQuotePrice = async function (symbol) {
+
+  let url = `https://financialmodelingprep.com/api/v3/stock/real-time-price/${symbol}`;
+
+  requestDefault = {
+    uri: url,
+    transform: function (body) {
+      if (body) return JSON.parse(body);
+      else return null;
+    },
+  };
+  let stockQuote = await request(requestDefault);
+
+  return stockQuote||null;
+}
+
 let getexpDates = async function (symbol, count) {
   let data = await request(requestPayload(symbol));
-  let expiryDates = data.optionChain.result[0].expirationDates;
-  if (count && count < expiryDates.length) {
-    expiryDates.length = count;
+  if (data) {
+    let expiryDates = data.optionChain.result[0].expirationDates;
+    if (count && count < expiryDates.length) {
+      expiryDates.length = count;
+    }
+    console.log("get expiry dates", expiryDates);
+    return expiryDates;
   }
-  console.log("get expiry dates", expiryDates);
-  return expiryDates;
+  else {
+    return null;
+  }
 };
 
 let getOptionData = async function (symbol, expDate) {
   let optionsArray = [];
   let data = await request(requestPayload(symbol, expDate));
+  let stockQuote = await getsymbolQuotePrice(symbol);
   const timeStamp = new Date().toISOString();
   let optionData = data.optionChain.result[0].options[0].straddles;
 
@@ -41,10 +63,14 @@ let getOptionData = async function (symbol, expDate) {
       let value = callData[key];
 
       if ((typeof value).toLowerCase() == "object") {
-        if(key == 'expiration') callData[key] = value.longFmt || 0;
-        else if(key == 'lastTradeDate') callData[key] = value.longFmt || 0
+        if (key == 'expiration') callData[key] = value.longFmt || 0;
+        else if (key == 'lastTradeDate') callData[key] = value.longFmt || 0
         else callData[key] = value.raw || 0;
       }
+    }
+    //add stock current price
+    if (stockQuote) {
+      callData['stockPrice'] = stockQuote.price;
     }
     queue.push(callData);
 
@@ -54,12 +80,15 @@ let getOptionData = async function (symbol, expDate) {
       let value = putData[key];
 
       if ((typeof value).toLowerCase() == "object") {
-        if(key == 'expiration') putData[key] = value.longFmt || 0;
-        else if(key == 'lastTradeDate') putData[key] = value.longFmt || 0
+        if (key == 'expiration') putData[key] = value.longFmt || 0;
+        else if (key == 'lastTradeDate') putData[key] = value.longFmt || 0
         else putData[key] = value.raw || 0;
       }
     }
-
+    //add stock current price
+    if (stockQuote) {
+      putData['stockPrice'] = stockQuote.price;
+    }
     queue.push(putData);
   }
 };

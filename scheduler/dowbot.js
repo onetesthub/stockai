@@ -1,5 +1,6 @@
 const dowcrawler = require("../crawlers/dowcrawler.js");
-const defaultSymbols = ["WFC"];
+//const defaultSymbols = ["WFC",'vlo','vxx','cvx'];
+const defaultSymbols = ['WFC','AMD','DAL','UBER',"CCL",'VLO','VXX','CVX'];
 let expWeekCount = 4;
 
 let botStatus;
@@ -9,6 +10,8 @@ module.exports = class DowBot {
     console.log(typeof symbols);
     if((typeof symbols).toLowerCase() == 'string') this.symbols = [ symbols ];
     else this.symbols = symbols || defaultSymbols;
+
+    this.symbols = defaultSymbols;
     this.interval = interval;
   }
 
@@ -23,7 +26,7 @@ module.exports = class DowBot {
           dowcrawler.getOptionData(symbol, week);
         }
       }
-    }, this.inerval || 10000);
+    }, this.inerval || 30000);
   }
 
   stopBot() {
