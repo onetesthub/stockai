@@ -2,6 +2,8 @@ var request = require("request-promise-native");
 const publiser = require("../publisher/publisher.js");
 const queue = new publiser("ussymbol");
 
+var contractVolumeLastValues = {};
+
 let requestPayload = function (symbol, expDate) {
   if (!expDate) {
     expDate = Math.round(new Date().getTime() / 1000 + 432000);
@@ -31,7 +33,7 @@ let getsymbolQuotePrice = async function (symbol) {
   };
   let stockQuote = await request(requestDefault);
 
-  return stockQuote||null;
+  return stockQuote || null;
 }
 
 let getexpDates = async function (symbol, count) {
@@ -72,7 +74,20 @@ let getOptionData = async function (symbol, expDate) {
     if (stockQuote) {
       callData['stockPrice'] = stockQuote.price;
     }
-    queue.push(callData);
+
+    //check if curent volume is bigger than  previou value, if yes push event.
+    if (!contractVolumeLastValues[callData.contractSymbol]) {
+      console.log('Pushing new event...')
+      queue.push(callData);
+    }
+    else if(contractVolumeLastValues[callData.contractSymbol] && contractVolumeLastValues[callData.contractSymbol] > callData.volume) {
+      console.log('Checking and pushing new event...',)
+      queue.push(callData);
+    }
+    else{
+      console.log('Ignoring the event as current volume is not greater than previous value...')
+    }
+    contractVolumeLastValues[callData.contractSymbol] = callData.volume;
 
     let putData = { ...item.put, symbol, timeStamp, type: "put" };
 
@@ -89,7 +104,19 @@ let getOptionData = async function (symbol, expDate) {
     if (stockQuote) {
       putData['stockPrice'] = stockQuote.price;
     }
-    queue.push(putData);
+    //check if curent volume is bigger than  previou value, if yes push event.
+    if (!contractVolumeLastValues[putData.contractSymbol]) {
+      console.log('Pushing New Event..')
+      queue.push(putData);
+    }
+    else if(contractVolumeLastValues[putData.contractSymbol] && contractVolumeLastValues[putData.contractSymbol] > putData.volume) {
+      console.log('Checking and pushing new event...')
+      queue.push(putData);
+    }
+    else{
+      console.log('Ignoring the event as current volume is not greater than previous value...')
+    }
+    contractVolumeLastValues[putData.contractSymbol] = putData.volume;
   }
 };
 
