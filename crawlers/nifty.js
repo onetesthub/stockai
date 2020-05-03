@@ -109,4 +109,5 @@ const getSymbolData = async (symbol, week) => {
   const crawlUrl = getCrawlUrl(symbol, week);
   let data = await getNiftyData(crawlUrl, symbol, week);
 };
+
 module.exports = { getSymbolData, getWeeks };
