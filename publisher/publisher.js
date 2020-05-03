@@ -32,7 +32,7 @@ module.exports = class Queue {
         console.error('error in publishing')
         return
       }
-      console.log(`statusCode: ${res.statusCode}`)
+      //console.log(`statusCode: ${res.statusCode}`)
       // console.log(body)
     });
   }

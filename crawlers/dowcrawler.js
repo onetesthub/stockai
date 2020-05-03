@@ -51,10 +51,9 @@ let getexpDates = async function (symbol, count) {
   }
 };
 
-let getOptionData = async function (symbol, expDate) {
+let getOptionData = async function (symbol, expDate,stockQuote) {
   let optionsArray = [];
   let data = await request(requestPayload(symbol, expDate));
-  let stockQuote = await getsymbolQuotePrice(symbol);
   const timeStamp = new Date().toISOString();
   let optionData = data.optionChain.result[0].options[0].straddles;
 
@@ -77,15 +76,15 @@ let getOptionData = async function (symbol, expDate) {
 
     //check if curent volume is bigger than  previou value, if yes push event.
     if (!contractVolumeLastValues[callData.contractSymbol]) {
-      console.log('Pushing new event...')
+      //console.log('Pushing new event...')
       queue.push(callData);
     }
     else if(contractVolumeLastValues[callData.contractSymbol] && contractVolumeLastValues[callData.contractSymbol] > callData.volume) {
       console.log('Checking and pushing new event...',)
-      queue.push(callData);
+      //queue.push(callData);
     }
     else{
-      console.log('Ignoring the event as current volume is not greater than previous value...')
+      //console.log('Ignoring the event as current volume is not greater than previous value...')
     }
     contractVolumeLastValues[callData.contractSymbol] = callData.volume;
 
@@ -106,15 +105,15 @@ let getOptionData = async function (symbol, expDate) {
     }
     //check if curent volume is bigger than  previou value, if yes push event.
     if (!contractVolumeLastValues[putData.contractSymbol]) {
-      console.log('Pushing New Event..')
+      //console.log('Pushing New Event..')
       queue.push(putData);
     }
     else if(contractVolumeLastValues[putData.contractSymbol] && contractVolumeLastValues[putData.contractSymbol] > putData.volume) {
-      console.log('Checking and pushing new event...')
+      //console.log('Checking and pushing new event...')
       queue.push(putData);
     }
     else{
-      console.log('Ignoring the event as current volume is not greater than previous value...')
+      //console.log('Ignoring the event as current volume is not greater than previous value...')
     }
     contractVolumeLastValues[putData.contractSymbol] = putData.volume;
   }
@@ -123,4 +122,5 @@ let getOptionData = async function (symbol, expDate) {
 module.exports = {
   getexpDates: getexpDates,
   getOptionData: getOptionData,
+  getsymbolQuotePrice:getsymbolQuotePrice
 };

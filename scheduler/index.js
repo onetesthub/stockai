@@ -7,7 +7,7 @@ let niftybot;
 const startBot = (type) => {
   type = type.toLowerCase();
   if(type == 'ussymbol'){
-    dowbot = new dowBot('WFC', 20000);
+    dowbot = new dowBot();
     dowbot.startBot();
   }else if(type == 'nifty' || type == 'banknifty'){
     niftybot = new niftyBot("NIFTY", 20000);

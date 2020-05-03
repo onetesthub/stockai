@@ -12,22 +12,29 @@ module.exports = class DowBot {
     if((typeof symbols).toLowerCase() == 'string') this.symbols = [ symbols ];
     else this.symbols = symbols || defaultSymbols;
 
-    this.symbols = defaultSymbols;
     this.interval = interval || defaultInterval;
   }
 
-  async startBot() {
-    console.log("Staring US BOT.....");
-    botStatus = setInterval(async () => {
-      for (const symbol of this.symbols) {
-        console.log("Fetching exp weeks for symbol ", symbol);
-        const expDates = await dowcrawler.getexpDates(symbol, expWeekCount);
+  async botevents(){
+    console.log("Staring US BOT with interval ", this.interval/1000,  'sec .....');
+    for (const symbol of this.symbols) {
+      console.log("Fetching exp weeks for symbol ", symbol);
+      const expDates = await dowcrawler.getexpDates(symbol, expWeekCount);
 
-        for (const week of expDates) {
-          dowcrawler.getOptionData(symbol, week);
-        }
+      console.log('Fetching stock current price..');
+      let stockQuote = await dowcrawler.getsymbolQuotePrice(symbol);
+      for (const week of expDates) {
+        console.log('Fetching option data for week ', week, ' and symbol ', symbol);
+        dowcrawler.getOptionData(symbol, week,stockQuote);
       }
-    }, this.inerval);
+    }
+  }
+
+  async startBot() {
+    this.botevents();
+    botStatus = setInterval(async () => {
+      this.botevents();
+    }, this.interval);
   }
 
   stopBot() {
