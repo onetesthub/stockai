@@ -81,7 +81,7 @@ let getOptionData = async function (symbol, expDate,stockQuote) {
     }
     else if(contractVolumeLastValues[callData.contractSymbol] && callData.volume > contractVolumeLastValues[callData.contractSymbol]) {
       console.log('New Events found..',)
-      //queue.push(callData);
+      queue.push(callData);
     }
     else{
       console.log('Ignoring the event as current volume is not greater than previous value...')
