@@ -76,17 +76,20 @@ let getOptionData = async function (symbol, expDate,stockQuote) {
 
     //check if curent volume is bigger than  previou value, if yes push event.
     if (!contractVolumeLastValues[callData.contractSymbol]) {
-      //console.log('Pushing new event...')
+      console.log('Previous events undefined...')
       queue.push(callData);
     }
-    else if(contractVolumeLastValues[callData.contractSymbol] && contractVolumeLastValues[callData.contractSymbol] > callData.volume) {
-      console.log('Checking and pushing new event...',)
+    else if(contractVolumeLastValues[callData.contractSymbol] && callData.volume > contractVolumeLastValues[callData.contractSymbol]) {
+      console.log('New Events found..',)
       //queue.push(callData);
     }
     else{
-      //console.log('Ignoring the event as current volume is not greater than previous value...')
+      console.log('Ignoring the event as current volume is not greater than previous value...')
     }
+    //update cache is vol is not undefined.
+    if(callData.volume){
     contractVolumeLastValues[callData.contractSymbol] = callData.volume;
+    }
 
     let putData = { ...item.put, symbol, timeStamp, type: "put" };
 
@@ -105,17 +108,20 @@ let getOptionData = async function (symbol, expDate,stockQuote) {
     }
     //check if curent volume is bigger than  previou value, if yes push event.
     if (!contractVolumeLastValues[putData.contractSymbol]) {
-      //console.log('Pushing New Event..')
-      queue.push(putData);
+      console.log('Previous events undefined..')
+      //queue.push(putData);
     }
-    else if(contractVolumeLastValues[putData.contractSymbol] && contractVolumeLastValues[putData.contractSymbol] > putData.volume) {
-      //console.log('Checking and pushing new event...')
+    else if(contractVolumeLastValues[putData.contractSymbol] && putData.volume > contractVolumeLastValues[putData.contractSymbol]) {
+      console.log('Found new event...')
       queue.push(putData);
     }
     else{
-      //console.log('Ignoring the event as current volume is not greater than previous value...')
+      console.log('Ignoring the event as current volume is not greater than previous value...')
     }
+    //update cache is vol is not undefined.
+    if(putData.volume){
     contractVolumeLastValues[putData.contractSymbol] = putData.volume;
+    }
   }
 };
 

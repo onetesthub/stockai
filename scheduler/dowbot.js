@@ -31,7 +31,10 @@ module.exports = class DowBot {
   }
 
   async startBot() {
-    this.botevents();
+    //create cache for prevous values
+    await this.botevents();
+    //to push events after validating with cache build from previous run
+    await this.botevents();
     botStatus = setInterval(async () => {
       this.botevents();
     }, this.interval);

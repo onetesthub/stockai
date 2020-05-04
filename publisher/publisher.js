@@ -16,7 +16,7 @@ module.exports = class Queue {
   dequeue() {
 
     let data = this.elements.splice(0, 10);
-    // console.log('data :>> ', data);
+    console.log('Publishing events ...', data.length);
     let symbolCategory = this.symbolCategory;
     let url = `http://localhost:4030/api/publish/${symbolCategory}`
     request({
