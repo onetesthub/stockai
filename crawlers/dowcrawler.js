@@ -88,7 +88,7 @@ let getOptionData = async function (symbol, expDate,stockQuote) {
     }
     //update cache is vol is not undefined.
     if(callData.volume){
-    contractVolumeLastValues[callData.contractSymbol] = callData.volume;
+      contractVolumeLastValues[callData.contractSymbol] = callData.volume;
     }
 
     let putData = { ...item.put, symbol, timeStamp, type: "put" };
@@ -109,7 +109,7 @@ let getOptionData = async function (symbol, expDate,stockQuote) {
     //check if curent volume is bigger than  previou value, if yes push event.
     if (!contractVolumeLastValues[putData.contractSymbol]) {
       console.log('Previous events undefined..')
-      //queue.push(putData);
+      queue.push(putData);
     }
     else if(contractVolumeLastValues[putData.contractSymbol] && putData.volume > contractVolumeLastValues[putData.contractSymbol]) {
       console.log('Found new event...')

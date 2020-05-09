@@ -1,35 +1,46 @@
 const axios = require("axios");
 const cheerio = require("cheerio");
 const publiser = require("../publisher/publisher");
-const queue = new publiser();
+const queue = new publiser('nifty');
 const niftyBaseUrl = "https://www1.nseindia.com/live_market/dynaContent/live_watch/option_chain/optionKeys.jsp";
 const stockBaseUrl = null;
+let contractVolumeLastValues = {};
 
-const getCurrStrikeData = (tableRows, currentIndex, $) => {
+const getNiftyCurrentPrice = (tableRows, currentIndex, $) => {
   let currIndex, currValue;
   tableRows.each((index, element) => {
-    if (index == tableRows.length - 1) return true // same as continue for loops
+    if (index == tableRows.length - 1) return true;
     if (Number($(element).children(".grybg").children("a").last().children("b").last().html().trim()) > currentIndex) {
       currIndex = index;
       currValue = Number($(element).children(".grybg").children("a").last().children("b").last().html().trim())
-      return false; //same as break for loops
+      return false;
     }
   });
-  return { currStrikePriceIndex: currIndex, currentValueRoundOff: currValue };
+  return { currstrikepriceIndex: currIndex, currentValueRoundOff: currValue };
 };
 
-const getWeeks = async (weekCount = 3) => {
-  const response = await axios.get("https://www1.nseindia.com/live_market/dynaContent/live_watch/option_chain/optionKeys.jsp");
-  $ = cheerio.load(response.data);
-
-  let dateDropDown = $("#date option");
-  let dateArray = [];
-  dateDropDown.each((index, element) => {
-    dateArray.push($(element).val());
-  });
-  dateArray.splice(0, 1);
-  dateArray.splice(3, dateArray.length - 3);
-  return dateArray;
+const getWeeks = async (symbol, count = 3) => {
+  try {
+    const response = await axios.get("https://www1.nseindia.com/live_market/dynaContent/live_watch/option_chain/optionKeys.jsp");
+    if(response){
+      $ = cheerio.load(response.data);
+    
+      let dateDropDown = $("#date option");
+      let dateArray = [];
+      dateDropDown.each((index, element) => {
+        dateArray.push($(element).val());
+      });
+      dateArray.splice(0, 1);
+      if(dateArray.length > count){
+        dateArray.splice(count, dateArray.length - count);
+      }
+      return dateArray;
+    }else{
+      return null
+    }
+  } catch (error) {
+    return null
+  }
 };
 
 const getCurrentNiftyValue = async ($) => {
@@ -42,10 +53,11 @@ const getCurrentNiftyValue = async ($) => {
 
 const getCrawlUrl = (symbol, week) => `https://www1.nseindia.com/live_market/dynaContent/live_watch/option_chain/optionKeys.jsp?segmentLink=17&instrument=OPTIDX&symbol=${symbol}&date=${week}`;
 
-const getNiftyData = async (crawlUrl, symbol, week) => {
-  const respoonse = await axios.get(crawlUrl);
+const getNiftyData = async (symbol, week) => {
+  const crawlUrl = getCrawlUrl(symbol, week);
+  const response = await axios.get(crawlUrl);
 
-  const $ = cheerio.load(respoonse.data);
+  const $ = cheerio.load(response.data);
   
   let headers = [];
   let tableHeaders = $("#octable thead tr");
@@ -56,58 +68,112 @@ const getNiftyData = async (crawlUrl, symbol, week) => {
   
   let tableRows = $("#octable tbody tr");
 
-  const { currentValue } = await getCurrentNiftyValue($);
+  const currentvalue = (await getCurrentNiftyValue($)).currentValue;
 
-  const { currStrikePriceIndex, currentValueRoundOff } = await getCurrStrikeData(tableRows, currentValue, $);
+  const { currstrikepriceIndex, currentValueRoundOff } = await getNiftyCurrentPrice(tableRows, currentvalue, $);
 
-  if (tableRows.length > currStrikePriceIndex + 20)
-    tableRows.splice(currStrikePriceIndex + 20, tableRows.length); // removing enteries from end
+  if (tableRows.length > currstrikepriceIndex + 20)
+    tableRows.splice(currstrikepriceIndex + 20, tableRows.length); // removing enteries from end
 
   let temp = 20;
-  if (currStrikePriceIndex > 20 && tableRows.length > 20)
-    tableRows.splice(0, currStrikePriceIndex - 20); // removing enteries from starting
-  else temp = currStrikePriceIndex;
+  if (currstrikepriceIndex > 20 && tableRows.length > 20)
+    tableRows.splice(0, currstrikepriceIndex - 20); // removing enteries from starting
+  else temp = currstrikepriceIndex;
+
+
+  let today = new Date();
+  const formattedDate = 
+    String(today.getFullYear()).slice(2, 4)
+    + String((today.getMonth() + 1 < 10) ? '0' + (today.getMonth()+1) : (today.getMonth()+1))
+    + String(today.getDate() < 10 ? '0' + today.getDate() : today.getDate())
 
   tableRows.each((index, element) => {
-    const strikePrice = Number( $(element).children(".grybg").children("a").last().children("b").last().html().trim() );
+    const strikeprice = Number( $(element).children(".grybg").children("a").last().children("b").last().html().trim() );
 
-    let callObj = { type: "call", symbol, expiryDate: week, currentValue, strikePrice },
-      putObj = { type: "put", symbol, expiryDate: week, currentValue, strikePrice };
+    const callContractSymbol = `${symbol.toUpperCase()}${formattedDate}C${strikeprice}`,
+      putContractSymbol = `${symbol.toUpperCase()}${formattedDate}P${strikeprice}`;
+
+    let callData = { type: "call", symbol, expirydate: week, currentvalue, strikeprice, contractsymbol: callContractSymbol },
+      putData = { type: "put", symbol, expirydate: week, currentvalue, strikeprice, contractsymbol: putContractSymbol };
 
     $(element).children('td').each((index, elem)=>{
+
       let currValue = Number(($(elem).text().trim() == '-')? 0 : ($(elem).text().trim()).replace(',', ''));
-      if(strikePrice < currentValueRoundOff){
+
+      const __key = headers[index].toLowerCase().split(' ').join('');
+
+      if(strikeprice < currentValueRoundOff){
         if($(elem).hasClass('nobg')){
-          putObj[headers[index]] = currValue;
+          putData[__key] = currValue;
         } else if ($(elem).hasClass("ylwbg")) {
-          callObj[headers[index]] = currValue;
+          callData[__key] = currValue;
         }
       } else {
         if ($(elem).hasClass("nobg")) {
-          callObj[headers[index]] = currValue;
+          callData[__key] = currValue;
         } else if ($(elem).hasClass("ylwbg")) {
-          putObj[headers[index]] = currValue;
+          putData[__key] = currValue;
         }
       }
     });
 
-    if (index < temp - 5) queue.push(putObj);
-    else if (index > temp + 4) queue.push(callObj);
-    else {
-      queue.push(callObj);
-      queue.push(putObj);
+    if (index < temp - 5){
+      if (!contractVolumeLastValues[putData.contractSymbol]) {
+        console.log('Previous events undefined...')
+        queue.push(putData);
+      }
+      else if(contractVolumeLastValues[putData.contractSymbol] && putData.volume > contractVolumeLastValues[putData.contractSymbol]) {
+        console.log('New Events found..',)
+        queue.push(putData);
+      }
+      else{
+        console.log('Ignoring the event as current volume is not greater than previous value...')
+      }
+    }else if (index > temp + 4){
+      if (!contractVolumeLastValues[callData.contractSymbol]) {
+        console.log('Previous events undefined...')
+        queue.push(callData);
+      }
+      else if(contractVolumeLastValues[callData.contractSymbol] && callData.volume > contractVolumeLastValues[callData.contractSymbol]) {
+        console.log('New Events found..',)
+        queue.push(callData);
+      }
+      else{
+        console.log('Ignoring the event as current volume is not greater than previous value...')
+      }
+    }else {
+      if (!contractVolumeLastValues[callData.contractSymbol]) {
+        console.log('Previous events undefined...')
+        queue.push(callData);
+      }
+      else if(contractVolumeLastValues[callData.contractSymbol] && callData.volume > contractVolumeLastValues[callData.contractSymbol]) {
+        console.log('New Events found..',)
+        queue.push(callData);
+      }
+      else{
+        console.log('Ignoring the event as current volume is not greater than previous value...')
+      }
+      ////
+      if (!contractVolumeLastValues[putData.contractSymbol]) {
+        console.log('Previous events undefined...')
+        queue.push(putData);
+      }
+      else if(contractVolumeLastValues[putData.contractSymbol] && putData.volume > contractVolumeLastValues[putData.contractSymbol]) {
+        console.log('New Events found..',)
+        queue.push(putData);
+      }
+      else{
+        console.log('Ignoring the event as current volume is not greater than previous value...')
+      }
+    }
+    if(callData.volume){
+      contractVolumeLastValues[callData.contractSymbol] = callData.volume;
+    }
+    if(putData.volume){
+      contractVolumeLastValues[putData.contractSymbol] = callData.volume;
     }
   });
   return true;
 };
 
-const getStockData = async (crawlUrl, symbol, week) => {
-  return null;
-};
-
-const getSymbolData = async (symbol, week) => {
-  const crawlUrl = getCrawlUrl(symbol, week);
-  let data = await getNiftyData(crawlUrl, symbol, week);
-};
-
-module.exports = { getSymbolData, getWeeks };
+module.exports = { getNiftyData, getWeeks };

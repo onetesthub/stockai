@@ -1,9 +1,9 @@
-const { getSymbolData, getWeeks } = require("./../crawlers/nifty");
-// const symbols = ["NIFTY", "BANKNIFTY"];
+const { getNiftyData, getWeeks } = require("./../crawlers/nifty");
 let botStatus;
-const symbols = ["NIFTY"]; //* for testing
+const symbols = ["NIFTY", "BANKNIFTY"];
+// const symbols = ["NIFTY"]; //* for testing
 const crawler = async (symbol, week) => {
-  getSymbolData(symbol, week);
+  getNiftyData(symbol, week);
 };
 
 module.exports = class NiftyBot {
@@ -11,20 +11,25 @@ module.exports = class NiftyBot {
     console.log(typeof symbols);
     if ((typeof symbols).toLowerCase() == "string") this.symbols = [symbols];
     else this.symbols = symbols || defaultSymbols;
-    this.interval = interval;
+    this.interval = interval || 300000;
+  }
+
+  botEvents(){
+    for (const symbol of this.symbols) {
+      for (const week of this.weeks) {
+        crawler(symbol, week);
+      }
+    }
   }
 
   async startBot() {
-    // const weeks = await getWeeks();
-    const weeks = ['30APR2020']; //* for testing
-
+    const weeks = await getWeeks();
+    // this.weeks = ['14MAY2020']; //* for testing
+    this.botEvents();
+    this.botEvents();
     botStatus = setInterval(() => {
-      for (const symbol of this.symbols) {
-        for (const week of weeks) {
-          crawler(symbol, week);
-        }
-      }
-    }, 10000 || 300000);
+      this.botEvents();
+    }, this.interval);
   }
   stopBot() {
     console.log("stopping us bot...");
