@@ -39,12 +39,13 @@ app.get('/api/start/:symbolCategory', (req,res)=>{
       })
   }
   startBot(symbolCategory);
-  // res.send('okie');
+  /*res.send('okie');
   setTimeout(() => {
     stopBot();
   }, 50000);
+  */
 
-  res.sendStatus('ok');
+  res.status(200);
 })
 
 /*

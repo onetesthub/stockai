@@ -10,7 +10,7 @@ const startBot = (type) => {
     dowbot = new dowBot();
     dowbot.startBot();
   }else if(type == 'nifty' || type == 'banknifty'){
-    niftybot = new niftyBot("NIFTY", 20000);
+    niftybot = new niftyBot();
     niftybot.startBot();
   }
 }

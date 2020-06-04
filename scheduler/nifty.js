@@ -1,16 +1,16 @@
 const { getNiftyData, getWeeks } = require("./../crawlers/nifty");
 let botStatus;
-const symbols = ["NIFTY", "BANKNIFTY"];
-// const symbols = ["NIFTY"]; //* for testing
+const defaultSymbols = ["NIFTY", "BANKNIFTY"];
+const config = require('../web/config');
+const interval = config.pollinterval_in_ms;
+const symbols = config.niftysymbols;
 const crawler = async (symbol, week) => {
   getNiftyData(symbol, week);
 };
 
 module.exports = class NiftyBot {
-  constructor(symbols, interval) {
-    console.log(typeof symbols);
-    if ((typeof symbols).toLowerCase() == "string") this.symbols = [symbols];
-    else this.symbols = symbols || defaultSymbols;
+  constructor() {
+    this.symbols = symbols || defaultSymbols;
     this.interval = interval || 300000;
   }
 
@@ -24,7 +24,7 @@ module.exports = class NiftyBot {
 
   async startBot() {
     const weeks = await getWeeks();
-    // this.weeks = ['14MAY2020']; //* for testing
+    this.weeks = weeks; //['14MAY2020']; //* for testing
     this.botEvents();
     this.botEvents();
     botStatus = setInterval(() => {

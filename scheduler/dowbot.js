@@ -1,17 +1,17 @@
 const dowcrawler = require("../crawlers/dowcrawler.js");
-//const defaultSymbols = ["WFC",'vlo','vxx','cvx'];
-const defaultSymbols = ['WFC','AMD','DAL','UBER',"CCL",'VLO','VXX','CVX'];
+const defaultSymbols = ['WFC','AMD'];
 let expWeekCount = 4;
 let defaultInterval = 300000;
+const config = require('../web/config');
+const interval = config.pollinterval_in_ms;
+const symbols = config.ussymbols;
 
 let botStatus;
 
 module.exports = class DowBot {
-  constructor(symbols, interval) {
+  constructor() {
     console.log(typeof symbols);
-    if((typeof symbols).toLowerCase() == 'string') this.symbols = [ symbols ];
-    else this.symbols = symbols || defaultSymbols;
-
+    this.symbols = symbols || defaultSymbols;
     this.interval = interval || defaultInterval;
   }
 
