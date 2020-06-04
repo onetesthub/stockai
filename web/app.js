@@ -45,7 +45,23 @@ app.get('/api/start/:symbolCategory', (req,res)=>{
   }, 50000);
   */
 
-  res.status(200);
+  res.status(200).send("started");
+})
+
+app.get('/api/stop/:symbolCategory', async (req,res)=>{
+  console.log(req.params);
+  let symbolCategory = req.params.symbolCategory.toLowerCase();
+
+  if (!allowedCategories.includes(symbolCategory)) {
+    return res
+      .status(400)
+      .json({
+        'status': 'error',
+        'msg': 'unidentified symbol category',
+      })
+  }
+  await stopBot(symbolCategory);
+  res.status(200).send("stopped..");
 })
 
 /*

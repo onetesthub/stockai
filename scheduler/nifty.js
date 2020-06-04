@@ -31,7 +31,7 @@ module.exports = class NiftyBot {
       this.botEvents();
     }, this.interval);
   }
-  stopBot() {
+  async stopBot() {
     console.log("stopping us bot...");
     clearInterval(botStatus);
   }

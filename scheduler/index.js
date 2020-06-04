@@ -17,9 +17,11 @@ const startBot = (type) => {
 
 const stopBot = (type) => {
   if(type == 'ussymbol'){
+    dowbot = new dowBot();
     dowbot.stopBot();
   }else if(type == 'nifty' || type == 'banknifty'){
-    niftybot.startBot();  
+    niftybot = new niftyBot();
+    niftybot.stopBot();  
   }
 }
 

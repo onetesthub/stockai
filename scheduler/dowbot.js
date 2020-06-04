@@ -40,7 +40,7 @@ module.exports = class DowBot {
     }, this.interval);
   }
 
-  stopBot() {
+  async stopBot() {
     console.log('stopping us bot...');
     clearInterval(botStatus);
   }
