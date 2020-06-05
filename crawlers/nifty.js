@@ -90,11 +90,12 @@ const getNiftyData = async (symbol, week) => {
   tableRows.each((index, element) => {
     const strikeprice = Number( $(element).children(".grybg").children("a").last().children("b").last().html().trim() );
 
-    const callContractSymbol = `${symbol.toUpperCase()}${formattedDate}C${strikeprice}`,
-      putContractSymbol = `${symbol.toUpperCase()}${formattedDate}P${strikeprice}`;
+    const callContractSymbol = `${symbol.toUpperCase()}${week}C${strikeprice}`,
+      putContractSymbol = `${symbol.toUpperCase()}${week}P${strikeprice}`;
+      const timeStamp = new Date().toISOString();
 
-    let callData = { type: "call", symbol, expirydate: week, currentvalue, strikeprice, contractsymbol: callContractSymbol },
-      putData = { type: "put", symbol, expirydate: week, currentvalue, strikeprice, contractsymbol: putContractSymbol };
+    let callData = { type: "call", symbol, expirydate: week, currentvalue, strikeprice, contractsymbol: callContractSymbol,timeStamp},
+      putData = { type: "put", symbol, expirydate: week, currentvalue, strikeprice, contractsymbol: putContractSymbol,timeStamp};
 
     $(element).children('td').each((index, elem)=>{
 

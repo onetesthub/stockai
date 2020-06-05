@@ -1,4 +1,4 @@
-const esHost = process.env.esHost || "34.69.76.149";
+const esHost = process.env.esHost || "127.0.0.1";
 console.log("ehOst is ", esHost);
 //const esHost = '10.128.0.28';
 const esPort = "9200";
